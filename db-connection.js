@@ -1,0 +1,55 @@
+require('dotenv').config();
+const knexConfig = require('./knexfile.js');
+const env = process.env.NODE_ENV || 'development';
+const knex = require('knex')(knexConfig[env]);
+
+async function main() {
+  try {
+    console.log(`Running in ${env} mode`);
+    // Run migrations
+    await knex.migrate.latest();
+
+    // Insert a new user
+    const result = await knex('users').insert({ name: 'bob', email: 'bob3@example.com' });
+    console.log(result); // returns id as [ 1 ] in sqlite, and an object with metadata in postgres
+    console.log((await knex('users')).at(-1)) // user row in sqlite and postgresql 
+
+    // const id = Array.isArray(result) ? result[0] : null; // Check if result is an array
+    // if (id) {
+    //   console.log('Inserted user with ID:', id);
+    // } else {
+    //   console.log('Insert failed or returned no ID');
+    // }
+
+    // Fetch all users
+    const users = await knex('users').select('*');
+    console.table(users);
+
+    // update user's name
+    const updateResult = await knex('users').where('email', 'bob3@example.com').update({
+        name: 'bobby'
+    });
+    console.log("updateResult: ", updateResult); // boolean in both systems
+
+    // select the user
+    const selectedUser = await knex.select('*').from('users').where("email", "bob3@example.com");
+    console.log("selectedUser: ", selectedUser); // a user list of user rows in sqlite and postgresql
+
+    // delete the user
+    const deleteResult = await knex('users').where('email', 'bob3@example.com').delete();
+    console.log(deleteResult); // seems to return a boolean for both systems
+
+
+    // await knex('cars').insert({ model: 'M5', brand: 'BMW' });
+    const cars = await knex('cars').select('*');
+    console.table(cars);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await knex.destroy();
+  }
+}
+
+main();
+
+module.exports = knex;
