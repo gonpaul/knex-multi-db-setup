@@ -1,6 +1,6 @@
 // Knex configuration to pick environment based on NODE_ENV
-
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
 
 module.exports = {
   development: {
